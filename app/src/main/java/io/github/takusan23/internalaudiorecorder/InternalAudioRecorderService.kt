@@ -121,13 +121,15 @@ class InternalAudioRecorderService : Service() {
                 val buffer = ByteArray(capacity)
                 // 内部音声を読み取る
                 val readBytes = audioRecord.read(buffer, 0, buffer.size)
-                // 書き込む。書き込んだデータは[onOutputBufferAvailable]で受け取れる
-                codecInputBuffer.put(buffer, 0, readBytes)
-                codec.queueInputBuffer(index, 0, readBytes, mPresentationTime, 0)
-                // ここはAOSPパクった。経過時間を計算してる
-                totalBytesRead += readBytes
-                mPresentationTime = 1000000L * (totalBytesRead / 2) / 44100
-
+                // 0以上なら書き込む
+                if (readBytes > 0) {
+                    // 書き込む。書き込んだデータは[onOutputBufferAvailable]で受け取れる
+                    codecInputBuffer.put(buffer, 0, readBytes)
+                    codec.queueInputBuffer(index, 0, readBytes, mPresentationTime, 0)
+                    // ここはAOSPパクった。経過時間を計算してる
+                    totalBytesRead += readBytes
+                    mPresentationTime = 1000000L * (totalBytesRead / 2) / 44100
+                }
             }
 
             override fun onOutputBufferAvailable(
